@@ -1,0 +1,7 @@
+/*
+    Import all files css
+*/
+
+@import "libs/bootstrap-4/css/bootstrap.min.css";
+@import "libs/font-awesome/css/font-awesome.min.css";
+@import "css/mystyle.css";

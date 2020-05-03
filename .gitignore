@@ -1,0 +1,6 @@
+vendor
+composer.phar
+public/uploads
+.idea
+.env
+.htaccess
