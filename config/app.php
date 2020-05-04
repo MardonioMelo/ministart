@@ -17,10 +17,20 @@ $env_require = [
 $dotenv = new App\Helpers\DotEnvConf($env_require);
 
 # CONFIGURAÇÕES DO BANCO DE DADOS ##########
-define('HOST', $dotenv->getEnv('ENV_HOST'));
-define('USER', $dotenv->getEnv('ENV_USER'));
-define('PASS', $dotenv->getEnv('ENV_PASS'));
-define('DBSA', $dotenv->getEnv('ENV_DBSA'));
+define("DATA_LAYER_CONFIG", [
+    "driver" => $dotenv->getEnv('ENV_DRIVE'),
+    "host" => $dotenv->getEnv('ENV_HOST'),
+    "port" => $dotenv->getEnv('ENV_PORT'),
+    "dbname" =>$dotenv->getEnv('ENV_DBSA'),
+    "username" => $dotenv->getEnv('ENV_USER'),
+    "passwd" => $dotenv->getEnv('ENV_PASS'),
+    "options" => [
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8",
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+        PDO::ATTR_CASE => PDO::CASE_NATURAL
+    ]
+]);
 
 # DEFINE SERVIDOR DE E-MAIL ###############
 define('MAILUSER', $dotenv->getEnv('ENV_MAILUSER'));

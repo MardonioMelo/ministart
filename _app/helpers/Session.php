@@ -2,9 +2,10 @@
 
 namespace App\Helpers;
 
-use App\Conn\Read;
-use App\Conn\Create;
-use App\Conn\Update;
+
+use App\Models\SiteViews;
+use App\Models\SiteViewsAgent;
+use App\Models\SiteViewsOnline;
 
 /**
  * Session.class [ HELPER ]
@@ -20,17 +21,22 @@ class Session
     private $Cache;
     private $Traffic;
     private $Browser;
-    private $TenantId;
+    /** @var SiteViews */
+    private $siteViews;
+    /** @var SiteViewsAgent */
+    private $siteViewsAgent;
+    /** @var SiteViewsOnline */
+    private $siteViewsOnline;
 
     /**
      * Session constructor.
      * @param null $Cache
-     * @param int $Tenant
      */
-    function __construct($Cache = null, $Tenant = 0)
+    function __construct($Cache = null)
     {
-        // session_start(); a sessão é iniciada no componente Auth
-        $this->TenantId = $Tenant;
+        $this->siteViews = new SiteViews();
+        $this->siteViewsAgent = new SiteViewsAgent();
+        $this->siteViewsOnline = new SiteViewsOnline();
         $this->CheckSession($Cache);
     }
 
@@ -72,7 +78,6 @@ class Session
     {
         $_SESSION['useronline'] = [
             "online_session" => session_id(),
-            "tenant_id" => $this->TenantId,
             "online_startview" => date('Y-m-d H:i:s'),
             "online_endview" => date('Y-m-d H:i:s', strtotime("+{$this->Cache}minutes")),
             "online_ip" => $_SERVER['REMOTE_ADDR'],
@@ -98,20 +103,25 @@ class Session
     private function setTraffic()
     {
         $this->getTraffic();
+
         if (!$this->Traffic):
-            $ArrSiteViews = ['tenant_id' => $this->TenantId, 'siteviews_date' => $this->Date, 'siteviews_users' => 1, 'siteviews_views' => 1, 'siteviews_pages' => 1];
-            $createSiteViews = new Create;
-            $createSiteViews->ExeCreate('sm_siteviews', $ArrSiteViews);
+            $this->siteViews->siteviews_date = $this->Date;
+            $this->siteViews->siteviews_users = 1;
+            $this->siteViews->siteviews_views = 1;
+            $this->siteViews->siteviews_pages = 1;
+            $this->siteViews->save();
         else:
+            $this->siteViews->findById($this->Traffic->siteviews_id);
             if (!$this->getCookie()):
-                $ArrSiteViews = ['tenant_id' => $this->TenantId, 'siteviews_users' => $this->Traffic['siteviews_users'] + 1, 'siteviews_views' => $this->Traffic['siteviews_views'] + 1, 'siteviews_pages' => $this->Traffic['siteviews_pages'] + 1];
+                $this->siteViews->siteviews_users = $this->Traffic->siteviews_users + 1;
+                $this->siteViews->siteviews_views = $this->Traffic->siteviews_views + 1;
+                $this->siteViews->siteviews_pages = $this->Traffic->siteviews_pages + 1;
             else:
-                $ArrSiteViews = ['tenant_id' => $this->TenantId, 'siteviews_views' => $this->Traffic['siteviews_views'] + 1, 'siteviews_pages' => $this->Traffic['siteviews_pages'] + 1];
+                $this->siteViews->siteviews_views = $this->Traffic->siteviews_views + 1;
+                $this->siteViews->siteviews_pages = $this->Traffic->siteviews_pages + 1;
             endif;
 
-            $updateSiteViews = new Update;
-            $updateSiteViews->ExeUpdate('sm_siteviews', $ArrSiteViews, "WHERE siteviews_date = :date", "date={$this->Date}");
-
+            $this->siteViews->save();;
         endif;
     }
 
@@ -119,10 +129,9 @@ class Session
     private function TrafficUpdate()
     {
         $this->getTraffic();
-        $ArrSiteViews = ['tenant_id' => $this->TenantId, 'siteviews_pages' => $this->Traffic['siteviews_pages'] + 1];
-        $updatePageViews = new Update;
-        $updatePageViews->ExeUpdate('sm_siteviews', $ArrSiteViews, "WHERE siteviews_date = :date", "date={$this->Date}");
-
+        $this->siteViews->findById($this->Traffic->siteviews_id);
+        $this->siteViews->siteviews_pages = $this->Traffic->siteviews_pages + 1;
+        $this->siteViews->save();
         $this->Traffic = null;
     }
 
@@ -130,10 +139,11 @@ class Session
     //ws_siteviews
     private function getTraffic()
     {
-        $readSiteViews = new Read;
-        $readSiteViews->ExeRead('sm_siteviews', "WHERE siteviews_date = :date", "date={$this->Date}");
-        if ($readSiteViews->getRowCount()):
-            $this->Traffic = $readSiteViews->getResult()[0];
+        $list = $this->siteViews->find("siteviews_date = :date", "date={$this->Date}")->limit(1)->fetch(true);
+        if ($list):
+            foreach ($list as $d) {
+                $this->Traffic = $d->data();
+            }
         endif;
     }
 
@@ -141,7 +151,7 @@ class Session
     private function getCookie()
     {
         $Cookie = filter_input(INPUT_COOKIE, 'useronline', FILTER_DEFAULT);
-        setcookie("useronline", base64_encode("startmelo"), time() + 86400);
+        setcookie("useronline", base64_encode("ministart"), time() + 86400);
         if (!$Cookie):
             return false;
         else:
@@ -173,16 +183,19 @@ class Session
     //Atualiza tabela com dados de navegadores!
     private function BrowserUpdate()
     {
-        $readAgent = new Read;
-        $readAgent->ExeRead('sm_siteviews_agent', "WHERE agent_name = :agent", "agent={$this->Browser}");
-        if (!$readAgent->getResult()):
-            $ArrAgent = ['tenant_id' => $this->TenantId, 'agent_name' => $this->Browser, 'agent_views' => 1];
-            $createAgent = new Create;
-            $createAgent->ExeCreate('sm_siteviews_agent', $ArrAgent);
+        $list = $this->siteViewsAgent->find("agent_name = :agent", "agent={$this->Browser}")->limit(1)->fetch(true);
+
+        if ($list):
+            foreach ($list as $d) {
+                $readAgent = $d->data();
+            }
+            $this->siteViewsAgent->findById($readAgent->agent_id);
+            $this->siteViewsAgent->agent_views = $readAgent->agent_views + 1;
+            $this->siteViewsAgent->save();
         else:
-            $ArrAgent = ['tenant_id' => $this->TenantId, 'agent_views' => $readAgent->getResult()[0]['agent_views'] + 1];
-            $updateAgent = new Update;
-            $updateAgent->ExeUpdate('sm_siteviews_agent', $ArrAgent, "WHERE agent_name = :name", "name={$this->Browser}");
+            $this->siteViewsAgent->agent_name = $this->Browser;
+            $this->siteViewsAgent->agent_views = 1;
+            $this->siteViewsAgent->save();
         endif;
     }
 
@@ -195,32 +208,31 @@ class Session
     //Cadastra usuário online na tabela!
     private function setUsuario()
     {
-        $sesOnline = $_SESSION['useronline'];
-        $sesOnline['agent_name'] = $this->Browser;
-        $sesOnline['tenant_id'] = $this->TenantId;
-
-        $userCreate = new Create;
-        $userCreate->ExeCreate('sm_siteviews_online', $sesOnline);
+        $this->siteViewsOnline->online_session = $_SESSION['useronline']['online_session'];
+        $this->siteViewsOnline->online_startview = $_SESSION['useronline']['online_startview'];
+        $this->siteViewsOnline->online_endview = $_SESSION['useronline']['online_endview'];
+        $this->siteViewsOnline->online_ip = $_SESSION['useronline']['online_ip'];
+        $this->siteViewsOnline->online_url = $_SESSION['useronline']['online_url'];
+        $this->siteViewsOnline->online_agent = $_SESSION['useronline']['online_agent'];
+        $this->siteViewsOnline->agent_name = $this->Browser;
+        $this->siteViewsOnline->save();
     }
 
     //Atualiza navegação do usuário online!
     private function UsuarioUpdate()
     {
-        $ArrOnlone = [
-            'online_endview' => $_SESSION['useronline']['online_endview'],
-            'online_url' => $_SESSION['useronline']['online_url'],
-            'tenant_id' => $this->TenantId
-        ];
+        $list = $this->siteViewsOnline->find("online_session = :ses", "ses={$_SESSION['useronline']['online_session']}")->limit(1)->fetch(true);
 
-        $userUpdate = new Update;
-        $userUpdate->ExeUpdate('sm_siteviews_online', $ArrOnlone, "WHERE online_session = :ses", "ses={$_SESSION['useronline']['online_session']}");
-
-        if (!$userUpdate->getRowCount()):
-            $readSes = new Read;
-            $readSes->ExeRead('sm_siteviews_online', 'WHERE online_session = :onses', "onses={$_SESSION['useronline']['online_session']}");
-            if (!$readSes->getRowCount()):
-                $this->setUsuario();
-            endif;
+        if ($list):
+            foreach ($list as $d) {
+                $readOnline = $d->data();
+            }
+            $this->siteViewsOnline->findById($readOnline->online_id);
+            $this->siteViewsOnline->online_endview = $_SESSION['useronline']['online_endview'];
+            $this->siteViewsOnline->online_url = $_SESSION['useronline']['online_url'];
+            $this->siteViewsOnline->save();
+        else:
+            $this->setUsuario();
         endif;
     }
 

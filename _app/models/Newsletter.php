@@ -2,11 +2,8 @@
 
 namespace App\Models;
 
-use App\Conn\Create;
-use App\Conn\Read;
-use App\Conn\Update;
-use App\Conn\Delete;
 use App\Helpers\Check;
+use CoffeeCode\DataLayer\DataLayer;
 
 /**
  * Respnsável por gerenciar o Newsletter do siste
@@ -14,7 +11,7 @@ use App\Helpers\Check;
  * Escrito por: Mardônio de Melo Filho
  * Email: mardonio.quimico@gmail.com
  */
-class Newsletter
+class Newsletter extends DataLayer
 {
 
     private $Data;
@@ -24,6 +21,11 @@ class Newsletter
 
     //Nome da tabela no banco de dados
     const Entity = 'sm_newsletter';
+
+    public function __construct()
+    {
+        parent::__construct(self::Entity, [], "newsletter_id", false);
+    }
 
     /**
      * <b>Cadastrar</b> Envelope os dados em um array atribuitivo e execute esse método
@@ -99,7 +101,7 @@ class Newsletter
      */
     private function Create()
     {
-        $Create = new Create;
+        $Create = new CrudPDO;
         $this->Data['newsletter_registration'] = date('Y-m-d H:i:s');
         $Create->ExeCreate(self::Entity, $this->Data);
         if ($Create->getResult()):
