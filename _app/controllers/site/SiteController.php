@@ -81,7 +81,14 @@ class SiteController extends Controller
         $this->View->Show($this->Data, $tpl);
     }
 
+    /*
+    * ***************************************
+    * **********       API         **********
+    * ***************************************
+    */
+
     /**
+     * Cadastra email para News Letter
      * @param $data
      */
     public function newsletter($data)

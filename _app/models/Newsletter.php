@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
+use App\Conn\TableNewsletter;
 use App\Helpers\Check;
-use CoffeeCode\DataLayer\DataLayer;
+
 
 /**
  * Respnsável por gerenciar o Newsletter do siste
@@ -11,21 +12,11 @@ use CoffeeCode\DataLayer\DataLayer;
  * Escrito por: Mardônio de Melo Filho
  * Email: mardonio.quimico@gmail.com
  */
-class Newsletter extends DataLayer
+class Newsletter
 {
-
     private $Data;
-    private $Subscri;
     private $Error;
     private $Result;
-
-    //Nome da tabela no banco de dados
-    const Entity = 'sm_newsletter';
-
-    public function __construct()
-    {
-        parent::__construct(self::Entity, [], "newsletter_id", false);
-    }
 
     /**
      * <b>Cadastrar</b> Envelope os dados em um array atribuitivo e execute esse método
@@ -38,19 +29,9 @@ class Newsletter extends DataLayer
         $this->mapData();
         $this->valData();
 
-        if($this->getResult()){
-            $this->Create();
+        if ($this->getResult()) {
+            $this->create();
         }
-    }
-
-    /**
-     * <b>Ler:</b> Informe o ID da inscrição para consultar os dados!
-     * @param $id
-     */
-    public function ExeRead($id)
-    {
-        $this->Subscri = (int)$id;
-        $this->Read();
     }
 
     /**
@@ -87,8 +68,6 @@ class Newsletter extends DataLayer
     private function valData()
     {
         if (Check::Email($this->Data['email'])) {
-            $this->Data['newsletter_email'] = $this->Data['email'];
-            unset($this->Data['email']);
             $this->Result = true;
         } else {
             $this->Error = "Opss, informe um e-mail valido!";
@@ -97,17 +76,20 @@ class Newsletter extends DataLayer
     }
 
     /**
-     * Cadasrtra!
+     * Cadastra email
      */
-    private function Create()
+    private function create()
     {
-        $Create = new CrudPDO;
-        $this->Data['newsletter_registration'] = date('Y-m-d H:i:s');
-        $Create->ExeCreate(self::Entity, $this->Data);
-        if ($Create->getResult()):
+        $crud = new TableNewsletter();
+        $crud->newsletter_email = $this->Data['email'];
+
+        if ($crud->save()) {
             $this->Error = "Sua inscrição para receber as Últimas Notícias foi 100% confirmada. Seja bem-vind(a)!";
             $this->Result = true;
-        endif;
+        } else {
+            $this->Error = $crud->fail()->getMessage();
+            $this->Result = false;
+        }
     }
 
 }

@@ -1,15 +1,15 @@
 <?php
 
 
-namespace App\Models;
+namespace App\Conn;
 
 use CoffeeCode\DataLayer\DataLayer;
 
 /**
- * Class SiteViewsAgent
+ * Class TableSiteViewsAgent
  * @package App\Models
  */
-class SiteViewsAgent extends DataLayer
+class TableViewsAgent extends DataLayer
 {
 
     /**
@@ -18,7 +18,7 @@ class SiteViewsAgent extends DataLayer
     public function __construct()
     {
        parent::__construct(
-           "sm_siteviews_agent",
+           "sm_views_agent",
            [
                "agent_name",
                "agent_views"

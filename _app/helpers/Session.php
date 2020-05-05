@@ -3,9 +3,9 @@
 namespace App\Helpers;
 
 
-use App\Models\SiteViews;
-use App\Models\SiteViewsAgent;
-use App\Models\SiteViewsOnline;
+use App\Conn\TableViews;
+use App\Conn\TableViewsAgent;
+use App\Conn\TableViewsOnline;
 
 /**
  * Session.class [ HELPER ]
@@ -21,11 +21,11 @@ class Session
     private $Cache;
     private $Traffic;
     private $Browser;
-    /** @var SiteViews */
+    /** @var TableViews */
     private $siteViews;
-    /** @var SiteViewsAgent */
+    /** @var TableViewsAgent */
     private $siteViewsAgent;
-    /** @var SiteViewsOnline */
+    /** @var TableViewsOnline */
     private $siteViewsOnline;
 
     /**
@@ -34,9 +34,9 @@ class Session
      */
     function __construct($Cache = null)
     {
-        $this->siteViews = new SiteViews();
-        $this->siteViewsAgent = new SiteViewsAgent();
-        $this->siteViewsOnline = new SiteViewsOnline();
+        $this->siteViews = new TableViews();
+        $this->siteViewsAgent = new TableViewsAgent();
+        $this->siteViewsOnline = new TableViewsOnline();
         $this->CheckSession($Cache);
     }
 

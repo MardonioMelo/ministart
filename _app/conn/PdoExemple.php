@@ -10,7 +10,7 @@ use CoffeeCode\DataLayer\Connect;
  * Class CrudPdo
  * @package App\Conn
  */
-class CrudPdo
+class PdoExemple
 {
 
     /*

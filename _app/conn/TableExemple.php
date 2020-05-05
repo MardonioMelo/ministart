@@ -10,7 +10,7 @@ use CoffeeCode\DataLayer\DataLayer;
  * Class Crud
  * @package App\conn
  */
-class Crud extends DataLayer
+class TableExemple extends DataLayer
 {
 
     /**
@@ -18,7 +18,6 @@ class Crud extends DataLayer
      */
     public function __construct()
     {
-
         parent::__construct(
             "name_table", # nome da tabela
             [],                 # colunas obrigatórias

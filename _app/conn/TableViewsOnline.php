@@ -1,15 +1,15 @@
 <?php
 
 
-namespace App\Models;
+namespace App\Conn;
 
 use CoffeeCode\DataLayer\DataLayer;
 
 /**
- * Class SiteViewsOnline
+ * Class TableSiteViewsOnline
  * @package App\Models
  */
-class SiteViewsOnline extends DataLayer
+class TableViewsOnline extends DataLayer
 {
 
     /**
@@ -18,7 +18,7 @@ class SiteViewsOnline extends DataLayer
     public function __construct()
     {
        parent::__construct(
-           "sm_siteviews_online",
+           "sm_views_online",
            [
                "online_session",
                "online_startview",
