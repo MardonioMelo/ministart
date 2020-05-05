@@ -1,6 +1,6 @@
 {
-  "name": "mardoniomelo/racas-dog",
-  "description": "API para raças de cachorro",
+  "name": "mardoniomelo/ministart",
+  "description": "Framework simples",
   "minimum-stability": "stable",
   "license": "proprietary",
   "authors": [
